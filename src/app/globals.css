@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* Scroll suàu en navegar per ancles internes */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Variant per activar dark via classe .dark a <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============ TEMA CLAR (per defecte) ============ */
+:root {
+  --background: #f6f1e7;       /* crema clar */
+  --background-soft: #efe7d6;  /* crema una mica més fosc */
+  --foreground: #2a2520;       /* gairebé negre però càlid */
+  --muted: #6b6157;            /* marró suau */
+  --primary: #c2410c;          /* terracota viu */
+  --primary-hover: #9a3412;
+  --accent: #6b8e23;           /* olivo */
+  --border: #d9cdb6;           /* sorra */
+  --card: #fffaf0;             /* blanc trencat */
+  --shadow-color: 0 0 0;
+}
+
+/* ============ TEMA FOSC ============ */
+.dark {
+  --background: #1a1410;       /* marró molt fosc, càlid */
+  --background-soft: #241c17;  /* una mica més clar */
+  --foreground: #f5ede0;       /* crema clar per al text */
+  --muted: #9c8f80;            /* marró clar mitjà */
+  --primary: #ea580c;          /* terracota més brillant en fosc */
+  --primary-hover: #f97316;
+  --accent: #84a83a;           /* olivo més vibrant */
+  --border: #3d322a;           /* marró fosc per a vores */
+  --card: #2a2018;             /* targetes lleugerament més clares */
+  --shadow-color: 0 0 0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-soft: var(--background-soft);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Estil tipogràfic per a títols principals */
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+}
+
+/* Textura granulada subtil al fons */
+.bg-grain {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+.dark .bg-grain {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0);
+}
+
+/* Scrollbar discreta */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Animació suau d'aparició */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeUp {
+  animation: fadeUp 0.6s ease-out both;
+}
