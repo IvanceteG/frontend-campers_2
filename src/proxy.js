@@ -1,15 +1,19 @@
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authConfig } from "@/lib/auth.config";
 
 /**
- * Middleware d'autorització per a rutes protegides (UC-10).
- * - /admin/*       → només EDITOR i ADMIN
- * - /admin/users   → només ADMIN (es comprova també a la pàgina)
+ * Proxy (abans "middleware") d'autorització per a rutes protegides.
+ * Next.js 16 ha reanomenat la convenció middleware → proxy.
+ *
+ * Usa authConfig (sense adapter Prisma) perquè corre en Edge Runtime.
+ * - /admin/*  → només EDITOR i ADMIN (UC-10)
  */
+const { auth } = NextAuth(authConfig);
+
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  // Rutes que requereixen com a mínim EDITOR
   if (pathname.startsWith("/admin")) {
     const role = req.auth?.user?.role;
 
@@ -27,7 +31,6 @@ export default auth((req) => {
   return NextResponse.next();
 });
 
-// Configura quines rutes passen pel middleware
 export const config = {
   matcher: ["/admin/:path*"],
 };

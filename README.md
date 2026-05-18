@@ -1,140 +1,175 @@
-# VanLife Rentals — Frontend
+# VanLife Rentals 🚐
 
-Landing pública de lloguer de furgonetes camper. Projecte de Sprint 1 (MVP visual + base de dades).
+Landing page corporativa full-stack per a una empresa de lloguer de furgonetes camper, amb catàleg de models, comentaris autenticats i formulari de contacte.
 
-Construït amb **Next.js 16** (App Router) + **React 19** + **Tailwind CSS 4**.
+Projecte **IA6** — M0613 DAW 2. Implementa el recorregut Next.js 16 (sessions S12–S15) amb arquitectura MVC, persistència PostgreSQL, autenticació amb Auth.js i control de rols.
 
-## Stack
+## 🔗 Enllaços
 
-- **Next.js 16** amb React Compiler activat
-- **React 19**
-- **Tailwind CSS 4** (config inline a `globals.css`, sense `tailwind.config.js`)
-- **Google Fonts** via `next/font`: Inter (UI) + Fraunces (display)
-- **next/image** per a imatges optimitzades
+- **Demo en producció:** _(afegir URL de Vercel després del desplegament)_
+- **Repositori:** _(afegir URL del repo)_
 
-## Estructura del projecte
+## 🔑 Credencials de prova
 
-Arquitectura **MVC** clarament separada:
+| Rol    | Email                | Contrasenya |
+|--------|----------------------|-------------|
+| ADMIN  | `admin@vanlife.cat`  | `Admin123!` |
+| EDITOR | `editor@vanlife.cat` | `Editor123!`|
+| USER   | `user@vanlife.cat`   | `User123!`  |
+
+També es pot crear un compte nou des de `/register` (rol USER per defecte).
+
+## 🧱 Stack
+
+| Capa              | Tecnologia                          |
+|-------------------|-------------------------------------|
+| Framework         | Next.js 16 (App Router)             |
+| UI                | React 19 + Tailwind CSS 4           |
+| ORM               | Prisma 6                            |
+| Base de dades     | PostgreSQL (Supabase)               |
+| Autenticació      | Auth.js v5 (next-auth) + JWT        |
+| Hash contrasenyes | bcryptjs                            |
+| Validació         | Zod                                 |
+| Desplegament      | Vercel                              |
+
+## 🏗️ Arquitectura MVC
 
 ```
 src/
-├── app/                        # App Router (rutes)
-│   ├── layout.js               # Layout arrel + fonts + anti-FOUC del tema
-│   ├── page.js                 # Home (landing)
-│   ├── loading.js              # Estat de càrrega global
-│   ├── error.js                # Boundary d'errors
-│   ├── not-found.js            # 404
-│   ├── globals.css             # Variables CSS + tema clar/fosc
-│   └── models/[slug]/page.js   # Detall d'un model (SSG)
-├── components/
-│   ├── sections/               # Seccions de la landing
-│   │   ├── Hero.js
-│   │   ├── Models.js
-│   │   ├── Reviews.js
-│   │   └── ContactForm.js
-│   └── ui/                     # Components reutilitzables
-│       ├── Navbar.js           # Sticky + menú mòbil + toggle tema
-│       ├── Footer.js           # Sempre fosc (independent del tema)
-│       ├── ModelCard.js        # Targeta resum (Server Component)
-│       ├── ModelCardImage.js   # Imatge amb fallback (Client Component)
-│       ├── ModelsGrid.js       # Graella amb toggle "destacats/tots"
-│       ├── ModelDetailImage.js # Imatge del detall amb fallback
-│       ├── HeroImage.js        # Imatge del Hero amb fallback
-│       ├── CamperIllustration.js  # Il·lustració SVG fallback
-│       └── ThemeToggle.js      # Botó canvi tema clar/fosc
-├── controllers/                # Lògica i normalització de respostes
+├── app/                          # App Router: rutes i vistes
+│   ├── page.js                   # Landing pública (home)
+│   ├── layout.js                 # Layout arrel + SessionProvider + tema
+│   ├── login/ · register/        # Autenticació (UC-05)
+│   ├── models/[slug]/            # Detall de model + comentaris (UC-02)
+│   ├── admin/                    # Panell protegit (UC-08, UC-09, UC-10)
+│   │   ├── page.js               # Resum / mètriques
+│   │   ├── models/               # CRUD de models (EDITOR+)
+│   │   ├── contact-requests/     # Sol·licituds rebudes (EDITOR+)
+│   │   └── users/                # Gestió de rols (només ADMIN)
+│   └── api/                      # ── CONTROLLERS (endpoints REST) ──
+│       ├── models/               # GET llista i detall (UC-01, UC-02)
+│       ├── models/[slug]/comments/  # GET públic, POST autenticat (UC-06, UC-07)
+│       ├── contact-requests/     # POST públic (UC-03, UC-04)
+│       ├── auth/[...nextauth]/   # Auth.js
+│       ├── auth/register/        # Registre d'usuaris
+│       └── admin/                # CRUD models + gestió usuaris (protegit)
+├── components/                   # ── VIEW ──
+│   ├── sections/                 # Hero, Models, Reviews, ContactForm
+│   └── ui/                       # Navbar, Footer, ModelCard, CommentsSection...
+├── controllers/                  # Normalització { ok, data, error }
 │   └── modelsController.js
-├── services/                   # Accés a dades (API o mock)
+├── services/                     # ── MODEL (accés a dades via Prisma) ──
 │   └── modelsService.js
-└── data/                       # Mock temporal mentre no hi ha BD
-    └── models.js
+├── lib/
+│   ├── prisma.js                 # Client Prisma (singleton)
+│   ├── auth.js                   # Configuració Auth.js + rols
+│   └── validations.js            # Esquemes Zod compartits
+└── middleware.js                 # Protecció de rutes /admin per rol
 
-public/models/                  # Imatges dels models (.jpg)
+prisma/
+├── schema.prisma                 # User, Account, Session, CamperModel, Comment, ContactRequest
+├── migrations/                   # Migracions aplicades
+└── seed.js                       # Llavor: 6 models + 3 usuaris + comentaris
 ```
 
-### Flux de dades
+**Separació de responsabilitats:**
+- **Model** → `services/` accedeix a la BD amb Prisma.
+- **Controller** → `app/api/` (endpoints) i `controllers/` (normalització).
+- **View** → `components/` i les `page.js`, sense lògica de dades.
 
-```
-data/models.js  →  services/modelsService.js  →  controllers/modelsController.js  →  components/sections/Models.js
-   (mock)            (fetch a API o mock           (try/catch + format          (vista pura)
-                      segons env var)               { ok, data, error })
-```
+## 🔐 Rols i permisos
 
-Aquesta separació permet substituir el mock per una API real **sense tocar les vistes**, només canviant `modelsService.js`.
+| Acció                          | Visitant | USER | EDITOR | ADMIN |
+|--------------------------------|:--------:|:----:|:------:|:-----:|
+| Veure catàleg i detall         | ✅       | ✅   | ✅     | ✅    |
+| Llegir comentaris              | ✅       | ✅   | ✅     | ✅    |
+| Enviar formulari de contacte   | ✅       | ✅   | ✅     | ✅    |
+| Publicar comentaris            | ❌       | ✅   | ✅     | ✅    |
+| Crear/editar/eliminar models   | ❌       | ❌   | ✅     | ✅    |
+| Veure sol·licituds de contacte | ❌       | ❌   | ✅     | ✅    |
+| Gestionar rols d'usuaris       | ❌       | ❌   | ❌     | ✅    |
 
-### Esquema de dades del model
+La restricció s'aplica a dos nivells: `middleware.js` (rutes `/admin`) i comprovació de sessió/rol dins de cada endpoint protegit (defensa en profunditat, UC-10).
 
-Camps esperats (a alinear amb la BD del backend):
+## ⚙️ Execució local
 
-| Camp              | Tipus    | Descripció                                |
-|-------------------|----------|-------------------------------------------|
-| `id`              | number   | Identificador únic                        |
-| `slug`            | string   | URL amigable (`volkswagen-california`)    |
-| `name`            | string   | Nom comercial                             |
-| `type`            | string   | Categoria (Compacta, Premium, etc.)       |
-| `seats`           | number   | Nombre de places                          |
-| `beds`            | number   | Nombre de llits                           |
-| `bathroom`        | string   | Tipus de bany ("—" si no en té)           |
-| `equipment`       | string   | Equipament d'assistència a la conducció   |
-| `pricePerDay`     | number   | Preu per dia en euros                     |
-| `description`     | string   | Descripció curta (per a targetes)         |
-| `longDescription` | string   | Descripció ampliada (per a la pàgina detall) |
-| `includes`        | string[] | Llista d'allò que inclou el lloguer       |
-| `image`           | string   | Ruta a la imatge (`/models/slug.jpg`)     |
-| `featured`        | boolean  | Si surt a la secció de destacats          |
+### 1. Requisits
 
-## Configuració
+- Node.js 20+
+- Una base de dades PostgreSQL (recomanat: projecte gratuït a [Supabase](https://supabase.com))
 
-### Variables d'entorn
-
-Copia `.env.example` a `.env.local`:
+### 2. Instal·lació
 
 ```bash
-cp .env.example .env.local
+git clone <url-del-repo>
+cd frontend-campers
+npm install
 ```
 
-Si `NEXT_PUBLIC_API_URL` està definida, l'aplicació farà fetch a l'API real.
-Sense ella, funciona en mode standalone amb dades mock.
+### 3. Variables d'entorn
 
-## Posada en marxa
+Copia `.env.example` a `.env` i omple els valors:
 
 ```bash
-npm install      # Instal·lar dependències
-npm run dev      # Servidor de desenvolupament (localhost:3000)
-npm run build    # Build de producció
-npm start        # Servir build de producció
-npm run lint     # Linter
+cp .env.example .env
 ```
 
-## Característiques implementades
+```env
+DATABASE_URL="postgresql://...:6543/postgres?pgbouncer=true"  # connexió amb pooling
+DIRECT_URL="postgresql://...:5432/postgres"                    # connexió directa (migracions)
+AUTH_SECRET="<secret aleatori, p.ex. openssl rand -base64 32>"
+AUTH_URL="http://localhost:3000"
+```
 
-- ✅ Mode clar / mode fosc amb toggle persistent (localStorage + `prefers-color-scheme`)
-- ✅ Landing amb Hero, catàleg de models, ressenyes i formulari de contacte
-- ✅ Disseny responsiu amb menú hamburguesa a mòbil
-- ✅ Navbar sticky amb fons translúcid al fer scroll
-- ✅ Catàleg amb toggle "veure només destacats / veure tota la flota"
-- ✅ Pàgina de detall del model amb generació estàtica (`generateStaticParams`)
-- ✅ Llista d&apos;allò que inclou el lloguer a la pàgina de detall
-- ✅ Optimització d'imatges amb `next/image` + fallback a il·lustració SVG
-- ✅ Formulari amb selector de model, validació de camps i dates coherents
-- ✅ Accessibilitat: labels, `aria-live`, `aria-hidden` als SVG decoratius
-- ✅ Estats `loading.js`, `error.js` i `not-found.js`
-- ✅ SEO amb metadata dinàmica per ruta
-- ✅ Footer sempre fosc, independent del tema
+> ⚠️ La contrasenya de la BD no ha de contenir caràcters especials sense codificar (`#`, `@`, `?`, etc.).
 
-## Disseny
+### 4. Base de dades
 
-Paleta càlida (crema, terracota, olivo) amb tipografia serif display (Fraunces) per a títols i sans-serif (Inter) per al cos. Decoracions sutils amb blobs difuminats i textura granulada.
+```bash
+npx prisma migrate dev --name init   # crea les taules
+npm run db:seed                       # carrega dades de prova
+```
 
-Totes les variables de color estan a `src/app/globals.css` sota `:root` (tema clar) i `.dark` (tema fosc).
+### 5. Arrencar
 
-## Següents passos (Sprint 2)
+```bash
+npm run dev
+```
 
-- [ ] Connectar `modelsService` al backend real
-- [ ] Implementar enviament del formulari contra `POST /api/contact-requests`
-- [ ] Filtres per tipus/preu al catàleg
-- [ ] Sistema de reserves amb dates i disponibilitat
+Obre [http://localhost:3000](http://localhost:3000).
 
-## Llicència
+Eines útils:
 
-Projecte acadèmic — DAW 2.
+```bash
+npm run db:studio    # explorador visual de la BD (Prisma Studio)
+npm run lint         # linter
+```
+
+## 🚀 Desplegament a Vercel
+
+1. Puja el repositori a GitHub.
+2. A [vercel.com](https://vercel.com): **New Project** → importa el repo.
+3. Configura les variables d'entorn (`DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `AUTH_URL`).
+4. `AUTH_URL` ha d'apuntar a la URL de producció de Vercel.
+5. Deploy. El build executa `prisma generate && next build` automàticament.
+
+## ✅ Casos d'ús coberts
+
+UC-01 a UC-11 implementats: catàleg públic, detall amb comentaris, formulari validat, registre/login, comentaris protegits per autenticació, gestió de continguts per EDITOR, administració d'usuaris per ADMIN i restricció d'accés per rol.
+
+## 📋 Planificació Agile
+
+- **Sprint 1** — MVP visual + BD: landing, esquema de dades, migracions i seed.
+- **Sprint 2** — API + seguretat + release: endpoints REST, Auth.js, rols, desplegament.
+
+## 🤖 Ús de la IA
+
+El projecte s'ha desenvolupat amb assistència d'un LLM, aplicant:
+- Prompting amb restriccions explícites (stack, versions, estructura MVC).
+- Revisió del codi generat (seguretat, permisos, consultes a BD, fugues de dades).
+- Correcció d'al·lucinacions i patrons obsolets (p. ex. configuració d'ESLint flat, versions de Prisma/Auth.js).
+- Proves manuals sobre els casos d'ús.
+
+## 📄 Llicència
+
+Projecte acadèmic — M0613 DAW 2.
